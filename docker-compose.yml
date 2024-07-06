@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: vac
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12365477S
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data  # Путь для хранения данных PostgreSQL
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Инициализация базы данных
+
+  web:
+    build: .
+    container_name: flask_app
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://postgres:12365477Suka@db:5432/vac
+      DATABASE_HOST: db
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - ./templates:/app/templates  # Монтируем директорию с шаблонами Flask
+      - ./static:/app/static        # Монтируем директорию со статическими файлами
+
+volumes:
+  postgres_data:

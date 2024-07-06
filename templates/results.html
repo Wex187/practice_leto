@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты поиска вакансий</title>
+    <style>
+        /* Базовые стили */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        label {
+            font-weight: bold;
+            flex: 1 1 auto;
+            min-width: 100px;
+        }
+        select, input[type="text"] {
+            flex: 2 1 auto;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: calc(100% - 8px);
+        }
+        .filter-buttons {
+            flex: 1 1 auto;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        input[type="submit"], .reset-filters {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover, .reset-filters:hover {
+            background-color: #45a049;
+        }
+        .back-to-search {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .back-to-search a {
+            color: #333;
+            text-decoration: none;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+        .back-to-search a:hover {
+            background-color: #f2f2f2;
+        }
+        .result-message {
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Результаты поиска вакансий</h1>
+
+        <!-- Кнопка "Назад к поиску" -->
+        <div class="back-to-search"><a href="/">Назад к поиску</a></div>
+
+        <!-- Форма для фильтров -->
+        <form class="filter-form" action="/results" method="GET">
+            <label for="title">Название:</label>
+            <input type="text" id="title" name="title" value="{{ request.args.get('title', '') }}">
+
+            <label for="company">Компания:</label>
+            <input type="text" id="company" name="company" value="{{ request.args.get('company', '') }}">
+
+            <label for="area">Регион:</label>
+            <input type="text" id="area" name="area" value="{{ request.args.get('area', '') }}">
+
+            <label for="experience_mode">Требуемый опыт:</label>
+            <select id="experience_mode" name="experience_mode">
+                <option value="all" {% if request.args.get('experience_mode') == 'all' %}selected{% endif %}>Любой</option>
+                <option value="no_experience" {% if request.args.get('experience_mode') == 'no_experience' %}selected{% endif %}>Нет опыта</option>
+                <option value="some_experience" {% if request.args.get('experience_mode') == 'some_experience' %}selected{% endif %}>Есть опыт</option>
+            </select>
+
+            <!-- Добавлен фильтр зарплаты -->
+            <label for="salary_filter">Фильтр по зарплате:</label>
+            <select id="salary_filter" name="salary_filter">
+                <option value="all" {% if request.args.get('salary_filter') == 'all' %}selected{% endif %}>Все вакансии</option>
+                <option value="with_salary" {% if request.args.get('salary_filter') == 'with_salary' %}selected{% endif %}>С зарплатой</option>
+                <option value="without_salary" {% if request.args.get('salary_filter') == 'without_salary' %}selected{% endif %}>Без зарплаты</option>
+            </select>
+
+            <!-- Кнопки "Применить фильтры" и "Сбросить фильтры" -->
+            <div class="filter-buttons">
+                <input type="submit" value="Применить фильтры">
+                <button class="reset-filters" type="button">Сбросить фильтры</button>
+            </div>
+        </form>
+
+        <!-- Вывод количества записей в базе данных -->
+        <p class="result-message">
+            {% if vacancies %}
+                Найдено вакансий: {{ vacancies|length }}
+            {% else %}
+                По вашему запросу вакансий не найдено.
+            {% endif %}
+        </p>
+
+        <!-- Таблица результатов поиска -->
+        {% if vacancies %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Компания</th>
+                        <th>Регион</th>
+                        <th>Зарплата</th>
+                        <th>Требуемый опыт</th>
+                        <th>Ссылка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vacancy in vacancies %}
+                        <tr>
+                            <td>{{ vacancy[0] }}</td>
+                            <td>{{ vacancy[2] }}</td>
+                            <td>{{ vacancy[3] }}</td>
+                            <td>{{ vacancy[4] }}</td>
+                            <td>{{ vacancy[5] }}</td>
+                            <td><a href="{{ vacancy[1] }}" target="_blank">Ссылка</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- Кнопка "Назад к поиску" внизу страницы -->
+        <div class="back-to-search"><a href="/">Назад к поиску</a></div>
+    </div>
+
+    <!-- jQuery для отправки формы фильтров -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Обработчик для формы фильтров
+            $('.filter-form').submit(function(event) {
+                // Остановить отправку формы по умолчанию
+                event.preventDefault();
+
+                // Получить значения фильтров
+                var title = $('#title').val();
+                var company = $('#company').val();
+                var area = $('#area').val();
+                var experience_mode = $('#experience_mode').val();
+                var salary_filter = $('#salary_filter').val();
+
+                // Сформировать URL для отправки GET-запроса с фильтрами
+                var url = '/results?title=' + encodeURIComponent(title) +
+                          '&company=' + encodeURIComponent(company) +
+                          '&area=' + encodeURIComponent(area) +
+                          '&experience_mode=' + encodeURIComponent(experience_mode) +
+                          '&salary_filter=' + encodeURIComponent(salary_filter);
+
+                // Перенаправить на новый URL
+                window.location.href = url;
+            });
+
+            // Обработчик для кнопки "Сбросить фильтры"
+            $('.reset-filters').click(function() {
+                // Сбросить значения полей формы
+                $('#title').val('');
+                $('#company').val('');
+                $('#area').val('');
+                $('#experience_mode').val('all');
+                $('#salary_filter').val('all');
+
+                // Отправить форму
+                $('.filter-form').submit();
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
